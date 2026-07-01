@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { Resend } from "resend";
 import React from "react";
-import { calculateOrder, PRODUCT_NAME, SELLER } from "@/lib/types";
+import { calculateOrder, calculateOtohaInvoice, PRODUCT_NAME, SELLER } from "@/lib/types";
 import { InvoiceDocument } from "@/lib/invoice-pdf";
+import { OtohaInvoiceDocument } from "@/lib/invoice-pdf-otoha";
 
 export const runtime = "nodejs";
 
@@ -27,11 +28,19 @@ export async function POST(req: NextRequest) {
 
     const order = calculateOrder({ companyName, shippingAddress, quantity });
 
-    // PDF請求書の生成
+    // PDF請求書の生成（お客様向け・レスポンスとしても返す）
     const pdfBuffer = await renderToBuffer(
       React.createElement(InvoiceDocument, { order }) as any
     );
     const pdfBase64 = pdfBuffer.toString("base64");
+
+    // 社内向け請求書（音羽経営労務コンサルティング→エイチビーソフトスタジオ）
+    // 注意：このPDFはメール添付にのみ使用し、APIレスポンス・Web画面には絶対に含めないこと。
+    const otohaInvoice = calculateOtohaInvoice(quantity);
+    const otohaPdfBuffer = await renderToBuffer(
+      React.createElement(OtohaInvoiceDocument, { invoice: otohaInvoice }) as any
+    );
+    const otohaPdfBase64 = otohaPdfBuffer.toString("base64");
 
     // 社内通知メール送信（Resend）
     const resendApiKey = process.env.RESEND_API_KEY;
@@ -67,6 +76,10 @@ export async function POST(req: NextRequest) {
           {
             filename: `請求書_${order.orderNumber}.pdf`,
             content: pdfBase64
+          },
+          {
+            filename: `社内資料_${order.orderNumber}.pdf`,
+            content: otohaPdfBase64
           }
         ]
       });

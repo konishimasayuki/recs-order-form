@@ -39,6 +39,58 @@ export interface OrderCalculated {
   totalAmount: number; // 税込合計
 }
 
+// --- 社内向け・非公開の請求書（音羽経営労務コンサルティング → 株式会社エイチビーソフトスタジオ） ---
+// 注意：このデータ・PDFはメール添付以外の場所（Web画面・APIレスポンス）に絶対に出力しないこと。
+
+export const OTOHA_UNIT_PRICE = 12871; // 税込単価（円）
+
+export const OTOHA_ISSUER = {
+  name: "音羽経営労務コンサルティング",
+  postalCode: "〒841-0051",
+  address: "佐賀県鳥栖市元町1237-2-408",
+  tel: "080-6406-9113",
+  bank: {
+    bankName: "三菱UFJ銀行",
+    branchName: "久留米支店",
+    accountType: "普通",
+    accountNumber: "0016202",
+    accountHolder: "コニシ マサユキ"
+  }
+};
+
+export interface OtohaInvoiceCalculated {
+  quantity: number;
+  unitPrice: number;
+  subtotalExcludingTax: number;
+  taxAmount: number;
+  totalAmount: number;
+  issueDateWareki: string; // 例: 令和8年7月1日
+}
+
+function toWareki(date: Date): string {
+  // 令和：2019年5月1日〜
+  const reiwaYear = date.getFullYear() - 2018;
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `令和${reiwaYear}年${month}月${day}日`;
+}
+
+export function calculateOtohaInvoice(quantity: number): OtohaInvoiceCalculated {
+  const q = Math.max(1, Math.floor(quantity));
+  const totalAmount = q * OTOHA_UNIT_PRICE;
+  const taxAmount = Math.round((totalAmount * TAX_RATE) / (1 + TAX_RATE));
+  const subtotalExcludingTax = totalAmount - taxAmount;
+
+  return {
+    quantity: q,
+    unitPrice: OTOHA_UNIT_PRICE,
+    subtotalExcludingTax,
+    taxAmount,
+    totalAmount,
+    issueDateWareki: toWareki(new Date())
+  };
+}
+
 export function calculateOrder(input: OrderInput): OrderCalculated {
   const quantity = Math.max(1, Math.floor(input.quantity));
   const totalAmount = quantity * UNIT_PRICE;

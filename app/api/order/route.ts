@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
     if (resendApiKey) {
       const resend = new Resend(resendApiKey);
       const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-      const notifyTo = process.env.NOTIFY_EMAIL || "ninjin.konishi@gmail.com";
+      const notifyTo = (process.env.NOTIFY_EMAIL || "ninjin.konishi@gmail.com")
+        .split(",")
+        .map((addr) => addr.trim())
+        .filter(Boolean);
 
       await resend.emails.send({
         from: `RECS注文フォーム <${fromAddress}>`,

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         .map((addr) => addr.trim())
         .filter(Boolean);
 
-      await resend.emails.send({
+      const { data: sendData, error: sendError } = await resend.emails.send({
         from: `RECS注文フォーム <${fromAddress}>`,
         to: notifyTo,
         subject: `【新規注文】${order.orderNumber} ${companyName}様`,
@@ -86,6 +86,16 @@ export async function POST(req: NextRequest) {
           }
         ]
       });
+
+      if (sendError) {
+        // Resendは失敗時に例外を投げず、ここにエラー内容が入る。
+        // Vercelの Deployments → Functions/Logs で内容を確認できる。
+        console.error("Resend send failed:", JSON.stringify(sendError));
+      } else {
+        console.log("Resend send succeeded:", sendData?.id, "to:", notifyTo.join(","));
+      }
+    } else {
+      console.error("RESEND_API_KEY is not set - email not sent.");
     }
 
     return NextResponse.json({

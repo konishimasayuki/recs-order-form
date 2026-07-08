@@ -1,6 +1,6 @@
 // 共通の型と定数（請求元情報・単価など）
 
-export const UNIT_PRICE = 15371; // 税込単価（円）
+export const UNIT_PRICE = 15771; // 税込単価（円）
 export const TAX_RATE = 0.1; // 消費税率 10%
 export const PRODUCT_NAME = "RECS（リモート始動阻止装置）GPS装置";
 
@@ -23,6 +23,8 @@ export const SELLER = {
 
 export interface OrderInput {
   companyName: string;
+  contactName: string;
+  email: string;
   shippingAddress: string;
   quantity: number;
 }
@@ -31,6 +33,8 @@ export interface OrderCalculated {
   orderNumber: string;
   orderDate: string; // YYYY-MM-DD
   companyName: string;
+  contactName: string;
+  email: string;
   shippingAddress: string;
   quantity: number;
   unitPrice: number;
@@ -42,7 +46,7 @@ export interface OrderCalculated {
 // --- 社内向け・非公開の請求書（音羽経営労務コンサルティング → 株式会社エイチビーソフトスタジオ） ---
 // 注意：このデータ・PDFはメール添付以外の場所（Web画面・APIレスポンス）に絶対に出力しないこと。
 
-export const OTOHA_UNIT_PRICE = 12871; // 税込単価（円）
+export const OTOHA_UNIT_PRICE = UNIT_PRICE - 2500; // 税込単価（円）＝お客様単価から2,500円引き
 
 export const OTOHA_ISSUER = {
   name: "音羽経営労務コンサルティング",
@@ -109,6 +113,8 @@ export function calculateOrder(input: OrderInput): OrderCalculated {
     orderNumber,
     orderDate,
     companyName: input.companyName,
+    contactName: input.contactName,
+    email: input.email,
     shippingAddress: input.shippingAddress,
     quantity,
     unitPrice: UNIT_PRICE,

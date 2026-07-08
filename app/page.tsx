@@ -5,7 +5,6 @@ import { OrderCalculated, PRODUCT_NAME, SELLER, UNIT_PRICE } from "@/lib/types";
 
 type OrderResponse = {
   order: OrderCalculated;
-  pdfBase64: string;
 };
 
 function yen(n: number): string {
@@ -14,6 +13,8 @@ function yen(n: number): string {
 
 export default function Page() {
   const [companyName, setCompanyName] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [email, setEmail] = useState("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -24,6 +25,8 @@ export default function Page() {
 
   const canSubmit =
     companyName.trim().length > 0 &&
+    contactName.trim().length > 0 &&
+    email.trim().length > 0 &&
     shippingAddress.trim().length > 0 &&
     quantity >= 1 &&
     !submitting;
@@ -37,7 +40,7 @@ export default function Page() {
       const res = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName, shippingAddress, quantity })
+        body: JSON.stringify({ companyName, contactName, email, shippingAddress, quantity })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -51,29 +54,12 @@ export default function Page() {
     }
   }
 
-  function handleDownloadPdf() {
-    if (!result) return;
-    const byteChars = atob(result.pdfBase64);
-    const byteNumbers = new Array(byteChars.length);
-    for (let i = 0; i < byteChars.length; i++) {
-      byteNumbers[i] = byteChars.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `請求書_${result.order.orderNumber}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
   function handleReset() {
     setResult(null);
     setError(null);
     setCompanyName("");
+    setContactName("");
+    setEmail("");
     setShippingAddress("");
     setQuantity(1);
   }
@@ -100,6 +86,31 @@ export default function Page() {
               onChange={(e) => setCompanyName(e.target.value)}
               required
             />
+          </div>
+
+          <div className="field">
+            <label htmlFor="contactName">氏名</label>
+            <input
+              id="contactName"
+              type="text"
+              placeholder="山田 太郎"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="email">メールアドレス</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="example@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <p className="field-hint">こちらのメールアドレス宛に請求書を発行します。</p>
           </div>
 
           <div className="field">
@@ -179,6 +190,14 @@ export default function Page() {
                 <td>{result.order.companyName}</td>
               </tr>
               <tr>
+                <th>氏名</th>
+                <td>{result.order.contactName}</td>
+              </tr>
+              <tr>
+                <th>メールアドレス</th>
+                <td>{result.order.email}</td>
+              </tr>
+              <tr>
                 <th>発送先</th>
                 <td style={{ whiteSpace: "pre-wrap" }}>{result.order.shippingAddress}</td>
               </tr>
@@ -212,7 +231,8 @@ export default function Page() {
           <div className="notice-box">
             <strong>ご注意</strong>
             <p>
-              お振込みのご入金確認後、製作に入ります。あらかじめご了承ください。
+              入力いただいたメールアドレスに請求書を発行いたします。
+              代金のご入金確認後、即部品発注に入ります。部品の取得に2〜3週間かかる見込みです。あらかじめご了承ください。
               ご不明な点がございましたら下記までお問い合わせください。
             </p>
           </div>
@@ -226,23 +246,12 @@ export default function Page() {
           </div>
 
           <div className="action-row">
-            <button type="button" className="download-btn" onClick={handleDownloadPdf}>
-              請求書PDFをダウンロード
-            </button>
-            <button type="button" className="reset-btn" onClick={handleReset}>
+            <button type="button" className="submit-btn" onClick={handleReset}>
               新しい注文を作成する
             </button>
           </div>
         </div>
       )}
-
-      <div className="seller-footer">
-        {SELLER.name}　{SELLER.postalCode} {SELLER.address}
-        <br />
-        TEL：{SELLER.tel}　FAX：{SELLER.fax}　担当：{SELLER.contact}
-        <br />
-        登録番号：{SELLER.registrationNumber}
-      </div>
     </div>
   );
 }

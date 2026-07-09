@@ -1,6 +1,6 @@
 // 共通の型と定数（請求元情報・単価など）
 
-export const UNIT_PRICE = 15771; // 税込単価（円）
+export const UNIT_PRICE = 15730; // 税込単価（円）
 export const TAX_RATE = 0.1; // 消費税率 10%
 export const PRODUCT_NAME = "RECS（リモート始動阻止装置）GPS装置";
 
